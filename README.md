@@ -14,11 +14,7 @@ It was designed to announce new torrent releases in a given iRC channel.
 
 `apt-get install python-pip && python-beautifulsoup`
 
-`pip install feedparser`
-
-`pip install django`
-
-`pip install cfscrape`
+`pip install feedparser django cfscrape`
 
 `wget http://sourceforge.net/projects/python-irclib/files/python-irclib/0.4.8/python-irclib-0.4.8.tar.gz`
 
