@@ -44,4 +44,4 @@ Thumbs.db
 
 # Sublime Text projects #
 #################################################################
-.sublime-*
+*.sublime-*
