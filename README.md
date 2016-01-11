@@ -18,6 +18,8 @@ It was designed to announce new torrent releases in a given iRC channel.
 
 `pip install django`
 
+`pip install cfscrape`
+
 `wget http://sourceforge.net/projects/python-irclib/files/python-irclib/0.4.8/python-irclib-0.4.8.tar.gz`
 
 `tar -zxvf python-irclib-0.4.8.tar.gz && rm python-irclib-0.4.8.tar.gz && cd python-irclib-0.4.8`
