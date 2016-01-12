@@ -209,7 +209,7 @@ class _wookie(SimpleIRCClient):
             items = entry.find('title')
             title = '{}'.format(items).replace('<title>', '')\
                                       .replace('</title>', '')\
-                                      .replace(' ', '')\
+                                      .replace(' ', '.')\
                                       .replace('.-.', '')
 
             if title not in filetext and\
