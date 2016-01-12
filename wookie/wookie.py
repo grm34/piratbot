@@ -19,8 +19,8 @@ from threading import (Thread, Event)
 from BeautifulSoup import BeautifulSoup
 from datetime import (datetime, timedelta)
 from django.utils.encoding import smart_str
-from config import (feeds, wookie, network, banned)
 from urllib2 import (urlopen, URLError, HTTPError)
+from config import (feeds, wookie, network, whitelist, blacklist)
 
 __appname__ = "wookie"
 __version__ = "v.3.0"
@@ -60,6 +60,19 @@ class _wookie(SimpleIRCClient):
         self.start_time = time.time()
         self.queue = Queue_Manager(self.connection)
 
+        self.BLUE = '\x0302'
+        self.RED = '\x0304'
+        self.YELLOW = '\x0308'
+        self.GREEN = '\x0303'
+        self.PURPLE = '\x0306'
+        self.PINK = '\x0313'
+        self.ORANGE = '\x0307'
+        self.BOLD = '\x02'
+        self.ITALIC = '\x1D'
+        self.UNDERLINE = '\x1F'
+        self.SWAP = '\x16'
+        self.END = '\x0F'
+
     def on_welcome(self, serv, ev):
         if network['password']:
             serv.privmsg(
@@ -70,13 +83,10 @@ class _wookie(SimpleIRCClient):
             serv.join(channel)
         try:
             self.history_manager()
-            time.sleep(1)
             self.pre_refresh()
-            time.sleep(1)
             self.xrel_refresh()
-            time.sleep(1)
             self.boerse_refresh()
-            time.sleep(2)
+            time.sleep(5)
             self.queue.start()
         except (OSError, IOError) as error:
             serv.disconnect()
@@ -99,7 +109,7 @@ class _wookie(SimpleIRCClient):
                 ev.source().split('!')[0], network['bot_name'])
 
     def history_manager(self):
-        home = '{}/.wookie'.format(os.environ.get('HOME'))
+        home = '{}/.wookie_logs'.format(os.environ.get('HOME'))
         self.wookie_path = os.path.dirname(os.path.realpath(__file__))
         self.boerse_entries = '{}/boerse-entries'.format(home)
         self.xrel_entries = '{}/xrel-entries'.format(home)
@@ -174,8 +184,9 @@ class _wookie(SimpleIRCClient):
 
         if '.help' == arguments[0].lower():
             serv.privmsg(
-                chan, '\x02Available commands are\x02: .help || '
-                      '.version || .uptime || .restart || .quit')
+                chan, '{0}Available commands are:{1} .help || '
+                      '.version || .uptime || .restart || .quit'.format(
+                          self.BOLD, self.END))
 
         if '.version' == arguments[0].lower():
             serv.privmsg(chan, network['bot_name'])
@@ -183,7 +194,8 @@ class _wookie(SimpleIRCClient):
         if '.uptime' == arguments[0].lower():
             uptime_raw = round(time.time() - self.start_time)
             uptime = timedelta(seconds=uptime_raw)
-            serv.privmsg(chan, '\x02Uptime\x02: {}'.format(uptime))
+            serv.privmsg(chan, '{0}Uptime:{1} {2}'.format(
+                self.BOLD, self.END, uptime))
 
     def boerse_refresh(self):
         FILE = open(self.boerse_entries, "r")
@@ -199,13 +211,16 @@ class _wookie(SimpleIRCClient):
                                       .replace('</title>', '')\
                                       .replace(' ', '')\
                                       .replace('.-.', '')
-            if title not in filetext:
+
+            if title not in filetext and\
+                    any([x in title for x in whitelist['boerse']]) and\
+                    any([x not in title for x in blacklist['boerse']]):
                 FILE = open(self.boerse_entries, "a")
                 FILE.write("{}\n".format(title))
                 FILE.close()
-                if any([word in title for word in banned['boerse']]):
-                    title = "{}".format(title.replace(word, ''))
-                self.on_rss_entry('[BOERSE] {}'.format(title))
+                self.on_rss_entry(
+                    '{0}{1}[BOERSE]{2} {3}'.format(
+                        self.BOLD, self.RED, self.END, title))
 
         threading.Timer(feeds['boerse_delay'], self.boerse_refresh).start()
 
@@ -217,13 +232,16 @@ class _wookie(SimpleIRCClient):
         xrel = feedparser.parse(feeds['xrel_url'])
         for entry in xrel.entries:
             title = smart_str(entry.title).replace('.-.', '')
-            if title not in filetext:
+
+            if title not in filetext and\
+                    any([x in title for x in whitelist['xrel']]) and\
+                    any([x not in title for x in blacklist['xrel']]):
                 FILE = open(self.xrel_entries, "a")
                 FILE.write("{}\n".format(title))
                 FILE.close()
-                if any([word in title for word in banned['xrel']]):
-                    title = "{}".format(title.replace(word, ''))
-                self.on_rss_entry('[XREL] {}'.format(title))
+                self.on_rss_entry(
+                    '{0}{1}[XREL]{2} {3}'.format(
+                        self.BOLD, self.YELLOW, self.END, title))
 
         threading.Timer(feeds['xrel_delay'], self.xrel_refresh).start()
 
@@ -236,17 +254,15 @@ class _wookie(SimpleIRCClient):
         pre = feedparser.parse(url)
         for entry in pre.entries:
             title = smart_str(entry.title)
-            if title not in filetext:
+            if title not in filetext and\
+                    any([x in title for x in whitelist['pre']]) and\
+                    any([x not in title for x in blacklist['pre']]):
                 FILE = open(self.pre_entries, "a")
                 FILE.write("{}\n".format(title))
                 FILE.close()
-                size = smart_str(
-                    entry.description).replace('<br />', '')\
-                                      .replace('Size', ' | Size').strip()
-                if any([word in title for word in banned['pre']]):
-                    title = "{}".format(title.replace(word, ''))
                 self.on_rss_entry(
-                        '[PRE] {0} [ {1} ]'.format(title, size))
+                        '{0}{1}[PRE]{2} {3}'.format(
+                            self.BOLD, self.GREEN, self.END, title))
 
         threading.Timer(feeds['pre_delay'], self.pre_refresh).start()
 

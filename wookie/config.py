@@ -37,8 +37,14 @@ feeds = {
     'pre_passkey': ''
 }
 
-banned = {
-    'boerse': ['', '', ''],
-    'xrel': ['', '', ''],
-    'pre': ['', '', '']
+whitelist = {
+    'boerse': ['x264', 'BDRip', 'DVDRip'],
+    'xrel': ['x264', 'BDRip', 'DVDRip'],
+    'pre': ['x264', 'BDRip', 'DVDRip']
+}
+
+blacklist = {
+    'boerse': ['test1', 'test2', 'test3'],
+    'xrel': ['test1', 'test2', 'test3'],
+    'pre': ['test1', 'test2', 'test3']
 }
